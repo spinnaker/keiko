@@ -67,15 +67,6 @@ interface Queue {
   fun reschedule(message: Message, delay: TemporalAmount): Unit
 
   /**
-   * Check for any un-acknowledged messages that are overdue and move them back
-   * onto the queue.
-   *
-   * This method is not intended to be called by clients directly but typically
-   * scheduled in some way.
-   */
-  fun retry(): Unit {}
-
-  /**
    * The expired time after which un-acknowledged messages will be retried.
    */
   val ackTimeout: TemporalAmount
@@ -85,14 +76,6 @@ interface Queue {
    * [Queue.ackTimeout] times.
    */
   val deadMessageHandler: DeadMessageCallback
-
-  companion object {
-    /**
-     * The maximum number of times an un-acknowledged message will be retried
-     * before failing permanently.
-     */
-    val maxRetries: Int = 5
-  }
 }
 
 /**

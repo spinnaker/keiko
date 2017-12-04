@@ -3,6 +3,8 @@ include "keiko-core",
     "keiko-mem-spring",
     "keiko-redis",
     "keiko-redis-spring",
+    "keiko-dynomite",
+    "keiko-dynomite-spring",
     "keiko-spring",
     "keiko-tck",
     "keiko-test-common"

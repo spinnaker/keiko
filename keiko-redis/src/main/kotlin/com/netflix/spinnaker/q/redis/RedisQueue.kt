@@ -22,7 +22,21 @@ import com.netflix.spinnaker.q.AttemptsAttribute
 import com.netflix.spinnaker.q.MaxAttemptsAttribute
 import com.netflix.spinnaker.q.Message
 import com.netflix.spinnaker.q.Queue
-import com.netflix.spinnaker.q.metrics.*
+import com.netflix.spinnaker.q.RetryableQueue
+import com.netflix.spinnaker.q.metrics.EventPublisher
+import com.netflix.spinnaker.q.metrics.LockFailed
+import com.netflix.spinnaker.q.metrics.MessageAcknowledged
+import com.netflix.spinnaker.q.metrics.MessageDead
+import com.netflix.spinnaker.q.metrics.MessageDuplicate
+import com.netflix.spinnaker.q.metrics.MessageNotFound
+import com.netflix.spinnaker.q.metrics.MessagePushed
+import com.netflix.spinnaker.q.metrics.MessageRescheduled
+import com.netflix.spinnaker.q.metrics.MessageRetried
+import com.netflix.spinnaker.q.metrics.MonitorableQueue
+import com.netflix.spinnaker.q.metrics.QueuePolled
+import com.netflix.spinnaker.q.metrics.QueueState
+import com.netflix.spinnaker.q.metrics.RetryPolled
+import com.netflix.spinnaker.q.metrics.fire
 import org.funktionale.partials.partially1
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory
@@ -48,7 +62,7 @@ class RedisQueue(
   override val ackTimeout: TemporalAmount = Duration.ofMinutes(1),
   override val deadMessageHandler: (Queue, Message) -> Unit,
   override val publisher: EventPublisher
-) : MonitorableQueue {
+) : MonitorableQueue, RetryableQueue {
 
   private val log: Logger = LoggerFactory.getLogger(javaClass)
 
@@ -128,7 +142,7 @@ class RedisQueue(
 
           fingerprints.forEach { fingerprint ->
             val attempts = redis.hgetInt(attemptsKey, fingerprint)
-            if (attempts >= Queue.maxRetries) {
+            if (attempts >= RetryableQueue.maxRetries) {
               redis.readMessage(fingerprint) { message ->
                 log.warn("Message $fingerprint with payload $message exceeded max retries")
                 handleDeadMessage(message)

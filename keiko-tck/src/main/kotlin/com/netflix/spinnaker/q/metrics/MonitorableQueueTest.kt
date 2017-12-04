@@ -17,11 +17,15 @@
 package com.netflix.spinnaker.q.metrics
 
 import com.netflix.spinnaker.q.DeadMessageCallback
-import com.netflix.spinnaker.q.Queue
+import com.netflix.spinnaker.q.RetryableQueue
 import com.netflix.spinnaker.q.TestMessage
 import com.netflix.spinnaker.spek.shouldEqual
 import com.netflix.spinnaker.time.MutableClock
-import com.nhaarman.mockito_kotlin.*
+import com.nhaarman.mockito_kotlin.isA
+import com.nhaarman.mockito_kotlin.mock
+import com.nhaarman.mockito_kotlin.reset
+import com.nhaarman.mockito_kotlin.times
+import com.nhaarman.mockito_kotlin.verify
 import org.jetbrains.spek.api.Spek
 import org.jetbrains.spek.api.dsl.describe
 import org.jetbrains.spek.api.dsl.given
@@ -296,8 +300,8 @@ abstract class MonitorableQueueTest<out Q : MonitorableQueue>(
         queue!!.push(TestMessage("a"))
       }
 
-      on("failing to acknowledge the message ${Queue.maxRetries} times") {
-        (1..Queue.maxRetries).forEach {
+      on("failing to acknowledge the message ${RetryableQueue.maxRetries} times") {
+        (1..RetryableQueue.maxRetries).forEach {
           queue!!.poll { _, _ -> }
           clock.incrementBy(queue!!.ackTimeout)
           triggerRedeliveryCheck.invoke(queue!!)
@@ -305,7 +309,7 @@ abstract class MonitorableQueueTest<out Q : MonitorableQueue>(
       }
 
       it("fires events indicating the message was retried") {
-        verify(publisher, times(Queue.maxRetries - 1)).publishEvent(isA<MessageRetried>())
+        verify(publisher, times(RetryableQueue.maxRetries - 1)).publishEvent(isA<MessageRetried>())
       }
 
       it("fires an event indicating the message is being dead lettered") {

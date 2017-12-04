@@ -33,6 +33,7 @@ subprojects {
 
   repositories {
     jcenter()
+    mavenLocal()
   }
 
   dependencies {
@@ -41,7 +42,7 @@ subprojects {
   }
 
   spinnaker {
-    dependenciesVersion = "0.117.0"
+    dependenciesVersion = "0.126.0"
   }
 
   sourceCompatibility = 1.8
