@@ -18,8 +18,18 @@ package com.netflix.spinnaker.q.memory
 
 import com.netflix.spinnaker.q.DeadMessageCallback
 import com.netflix.spinnaker.q.Message
-import com.netflix.spinnaker.q.Queue
-import com.netflix.spinnaker.q.metrics.*
+import com.netflix.spinnaker.q.RetryableQueue
+import com.netflix.spinnaker.q.metrics.EventPublisher
+import com.netflix.spinnaker.q.metrics.MessageAcknowledged
+import com.netflix.spinnaker.q.metrics.MessageDead
+import com.netflix.spinnaker.q.metrics.MessageDuplicate
+import com.netflix.spinnaker.q.metrics.MessagePushed
+import com.netflix.spinnaker.q.metrics.MessageRetried
+import com.netflix.spinnaker.q.metrics.MonitorableQueue
+import com.netflix.spinnaker.q.metrics.QueuePolled
+import com.netflix.spinnaker.q.metrics.QueueState
+import com.netflix.spinnaker.q.metrics.RetryPolled
+import com.netflix.spinnaker.q.metrics.fire
 import org.slf4j.Logger
 import org.slf4j.LoggerFactory.getLogger
 import org.springframework.scheduling.annotation.Scheduled
@@ -41,7 +51,7 @@ class InMemoryQueue(
   override val ackTimeout: TemporalAmount = Duration.ofMinutes(1),
   override val deadMessageHandler: DeadMessageCallback,
   override val publisher: EventPublisher
-) : MonitorableQueue {
+) : MonitorableQueue, RetryableQueue {
 
   private val log: Logger = getLogger(javaClass)
 
@@ -82,7 +92,7 @@ class InMemoryQueue(
     val now = clock.instant()
     fire<RetryPolled>()
     unacked.pollAll { message ->
-      if (message.count >= Queue.maxRetries) {
+      if (message.count >= RetryableQueue.maxRetries) {
         deadMessageHandler.invoke(this, message.payload)
         fire<MessageDead>()
       } else {

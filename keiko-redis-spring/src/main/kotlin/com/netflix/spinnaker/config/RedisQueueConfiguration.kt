@@ -26,6 +26,7 @@ import org.apache.commons.pool2.impl.GenericObjectPoolConfig
 import org.springframework.beans.factory.annotation.Qualifier
 import org.springframework.beans.factory.annotation.Value
 import org.springframework.boot.autoconfigure.condition.ConditionalOnMissingBean
+import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty
 import org.springframework.boot.context.properties.EnableConfigurationProperties
 import org.springframework.context.annotation.Bean
 import org.springframework.context.annotation.Configuration
@@ -38,6 +39,7 @@ import java.time.Clock
 import java.time.Duration
 
 @Configuration
+@ConditionalOnProperty("keiko.queue.redis.enabled")
 @EnableConfigurationProperties(RedisQueueProperties::class)
 open class RedisQueueConfiguration {
 

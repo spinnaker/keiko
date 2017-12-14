@@ -1,0 +1,20 @@
+apply from: "$rootDir/gradle/spek.gradle"
+
+dependencies {
+  compile project(":keiko-core")
+  compile("com.netflix.dyno:dyno-jedis:${spinnaker.version("dynomite")}") {
+    exclude group: 'joda-time'
+    exclude group: 'org.apache.httpcomponents'
+    exclude group: 'org.slf4j'
+  }
+  compile("com.netflix.dyno-queues:dyno-queues-redis:1.1.0-SNAPSHOT") {
+    exclude group: 'com.netflix'
+  }
+  compile "com.fasterxml.jackson.core:jackson-databind:${spinnaker.version("jackson")}"
+  compile "com.fasterxml.jackson.module:jackson-module-kotlin:${spinnaker.version("jackson")}"
+  compile "org.funktionale:funktionale-partials:1.1"
+  compile "com.google.guava:guava:${spinnaker.version("guava")}"
+
+  testCompile project(":keiko-tck")
+  testCompile "com.netflix.spinnaker.kork:kork-jedis-test:${spinnaker.version("kork")}"
+}
