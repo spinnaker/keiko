@@ -5,6 +5,7 @@ include "keiko-core",
     "keiko-redis-spring",
     "keiko-spring",
     "keiko-tck",
-    "keiko-test-common"
+    "keiko-test-common",
+    "contrib:redis-cron-scheduler"
 
 rootProject.name = "keiko"
