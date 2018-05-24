@@ -47,11 +47,12 @@ subprojects {
   sourceCompatibility = 1.8
   targetCompatibility = 1.8
 
-  license {
-    mapping {
-      kt = "SLASHSTAR_STYLE"
-    }
-  }
+  // TODO rz - randomly broke?
+//  license {
+//    mapping {
+//      kt = "SLASHSTAR_STYLE"
+//    }
+//  }
 }
 
 defaultTasks "build"
