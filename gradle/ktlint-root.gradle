@@ -1,0 +1,31 @@
+repositories {
+  jcenter()
+}
+
+configurations {
+  ktlint
+}
+
+dependencies {
+  ktlint "com.github.shyiko:ktlint:0.23.1"
+}
+
+task ktlintIdea(type: JavaExec, group: "init") {
+  description = "Apply ktlint rules to IntelliJ"
+  classpath = configurations.ktlint
+  main = "com.github.shyiko.ktlint.Main"
+  args "--apply-to-idea-project", "-y"
+}
+
+task ktlintGit(type: JavaExec, group: "init") {
+  description = "Apply ktlint rules to git commit hook"
+  classpath = configurations.ktlint
+  main = "com.github.shyiko.ktlint.Main"
+  args "--install-git-pre-commit-hook"
+}
+
+task setup(type: JavaExec, group: "init") {
+  description = "Setup local development environment"
+  dependsOn ktlintIdea
+  dependsOn ktlintGit
+}
