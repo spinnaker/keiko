@@ -6,7 +6,6 @@ dependencies {
   compile "com.fasterxml.jackson.core:jackson-databind:${spinnaker.version("jackson")}"
   compile "com.fasterxml.jackson.module:jackson-module-kotlin:${spinnaker.version("jackson")}"
   compile "org.funktionale:funktionale-partials:1.1"
-  compile "com.google.guava:guava:${spinnaker.version("guava")}"
 
   testCompile project(":keiko-tck")
   testCompile "com.netflix.spinnaker.kork:kork-jedis-test:${spinnaker.version("kork")}"

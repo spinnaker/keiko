@@ -4,6 +4,7 @@ dependencies {
   compile "com.fasterxml.jackson.core:jackson-annotations:${spinnaker.version("jackson")}"
   compile "com.fasterxml.jackson.core:jackson-databind:${spinnaker.version("jackson")}"
   compile "org.springframework:spring-context:${spinnaker.version("spring")}"
+  compile "com.google.guava:guava:${spinnaker.version("guava")}"
 
   testCompile project(":keiko-test-common")
 }
