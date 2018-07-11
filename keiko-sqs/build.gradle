@@ -1,0 +1,15 @@
+apply from: "$rootDir/gradle/spek.gradle"
+
+dependencies {
+  compile project(":keiko-core")
+
+  compile "com.amazonaws:aws-java-sdk-sqs:${spinnaker.version("aws")}"
+  compile "com.amazonaws:aws-java-sdk-cloudwatch:${spinnaker.version("aws")}"
+  compile "com.amazonaws:aws-java-sdk-dynamodb:${spinnaker.version("aws")}"
+  compile "org.funktionale:funktionale-partials:1.1"
+  compile "com.fasterxml.jackson.core:jackson-databind:${spinnaker.version("jackson")}"
+  compile "com.fasterxml.jackson.module:jackson-module-kotlin:${spinnaker.version("jackson")}"
+  compile "com.google.guava:guava:${spinnaker.version("guava")}"
+
+  testCompile project(":keiko-tck")
+}

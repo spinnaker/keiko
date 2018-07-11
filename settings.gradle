@@ -3,6 +3,8 @@ include "keiko-core",
     "keiko-mem-spring",
     "keiko-redis",
     "keiko-redis-spring",
+    "keiko-sqs",
+//    "keiko-sqs-spring",
     "keiko-spring",
     "keiko-tck",
     "keiko-test-common"
