@@ -42,7 +42,9 @@ import java.time.Instant
 import java.time.temporal.ChronoUnit
 import java.time.temporal.TemporalAmount
 import java.util.Date
+import java.util.Queue
 import java.util.UUID
+import java.util.concurrent.ConcurrentLinkedQueue
 
 internal const val DELIVERY_TIME = "DeliveryTime"
 internal const val SENT_TIMESTAMP = "SentTimestamp"
@@ -65,7 +67,7 @@ class SqsQueue(
   private val log: Logger = LoggerFactory.getLogger(javaClass)
 
   private val queueUrl: String
-  private val prefetchedMessages = mutableListOf<MessagePair>()
+  private val prefetchedMessages = ConcurrentLinkedQueue<MessagePair>()
 
   init {
     log.info("Configuring queue: $queueName")
@@ -79,7 +81,7 @@ class SqsQueue(
   /**
    * Prefetch messages so that most poll operations don't need to wait to poll.
    */
-  private fun prefetchMessages(onDemand: Boolean = false): List<MessagePair> {
+  private fun prefetchMessages(onDemand: Boolean = false): Queue<MessagePair> {
     if (prefetchedMessages.isEmpty()) {
       if (onDemand) {
         // TODO rz - Would be nice to just record this metric via spectator
