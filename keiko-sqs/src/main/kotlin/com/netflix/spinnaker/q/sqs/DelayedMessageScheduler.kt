@@ -29,6 +29,7 @@ interface DelayedMessageScheduler {
 }
 
 class DefaultDelayedMessageScheduler(
+  private val lockProvider: LockProvider,
   private val messageRepository: MessageRepository,
   private val queue: Queue,
   private val maxDeliveryDelay: TemporalAmount
@@ -37,17 +38,19 @@ class DefaultDelayedMessageScheduler(
   private val log = LoggerFactory.getLogger(javaClass)
 
   override fun schedule() {
-    val now = Instant.now()
-    messageRepository.scheduled(now.plus(maxDeliveryDelay)) { message, deliveryTime ->
-      val delay = (deliveryTime.toEpochMilli() - now.toEpochMilli()).let {
-        if (it <= 0) {
-          Duration.ZERO
-        } else {
-          Duration.ofMillis(it)
+    lockProvider.tryAcquire("MessageSchedules") {
+      val now = Instant.now()
+      messageRepository.scheduled(now.plus(maxDeliveryDelay)) { message, deliveryTime ->
+        val delay = (deliveryTime.toEpochMilli() - now.toEpochMilli()).let {
+          if (it <= 0) {
+            Duration.ZERO
+          } else {
+            Duration.ofMillis(it)
+          }
         }
+        log.info("Enqueuing scheduled message (delay $delay): $message")
+        queue.push(message, delay)
       }
-      log.info("Enqueuing scheduled message (delay $delay): $message")
-      queue.push(message, delay)
     }
   }
 }

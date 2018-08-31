@@ -6,6 +6,7 @@ dependencies {
   compile "com.amazonaws:aws-java-sdk-sqs:${spinnaker.version("aws")}"
   compile "com.amazonaws:aws-java-sdk-cloudwatch:${spinnaker.version("aws")}"
   compile "com.amazonaws:aws-java-sdk-dynamodb:${spinnaker.version("aws")}"
+  compile "com.amazonaws:dynamodb-lock-client:1.0.0"
   compile "org.funktionale:funktionale-partials:1.1"
   compile "com.fasterxml.jackson.core:jackson-databind:${spinnaker.version("jackson")}"
   compile "com.fasterxml.jackson.module:jackson-module-kotlin:${spinnaker.version("jackson")}"

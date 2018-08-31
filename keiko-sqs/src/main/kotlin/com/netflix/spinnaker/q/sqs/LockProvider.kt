@@ -13,14 +13,8 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.netflix.spinnaker.q.sqs.federation
+package com.netflix.spinnaker.q.sqs
 
-import com.amazonaws.services.sqs.AmazonSQS
-
-typealias AmazonSqsClientFactory = (queueName: String) -> AmazonSQS
-
-class DefaultAmazonSqsClientFactory : AmazonSqsClientFactory {
-  override fun invoke(queueName: String): AmazonSQS {
-    throw UnsupportedOperationException("not implemented")
-  }
+interface LockProvider {
+  fun tryAcquire(lockName: String, callback: () -> Unit)
 }

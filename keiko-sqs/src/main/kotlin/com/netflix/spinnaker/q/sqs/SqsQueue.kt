@@ -126,12 +126,12 @@ class SqsQueue(
   }
 
   override fun push(message: Message, delay: TemporalAmount) {
-    if (delay.get(ChronoUnit.MINUTES) > SQS_MAX_DELAY_MINUTES) {
+    if (Duration.from(delay) > Duration.ofMinutes(SQS_MAX_DELAY_MINUTES)) {
       messageRepository.schedule(message, delay)
     } else {
       val request = SendMessageRequest(queueUrl, mapper.writeValueAsString(message)).apply {
         addAttribute(FINGERPRINT, message.fingerprint, "String")
-        if (delay.get(ChronoUnit.MILLIS) > 0) {
+        if (Duration.from(delay) > Duration.ZERO) {
           addAttribute(DELIVERY_TIME, Instant.now().plus(delay).toEpochMilli().toString(), "Number")
         }
       }

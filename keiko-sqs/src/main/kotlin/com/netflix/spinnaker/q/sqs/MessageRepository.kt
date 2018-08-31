@@ -42,7 +42,7 @@ interface MessageRepository {
   fun schedule(message: Message, delay: TemporalAmount)
 
   /**
-   * Given a list of [fingerprints], a map of any matching reschedules and their
+   * Given a list of [fingerprints], a map of any matching schedules and their
    * delivery times will be returned. Any fingerprint that does not have a
    * reschedule record will not be included in the response.
    */

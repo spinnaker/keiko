@@ -104,6 +104,7 @@ class DynamoDbMessageRepository(
         MESSAGE_FINGERPRINT, message.fingerprint,
         DELIVERY_TIME, deliveryTime.toEpochMilli())
       .withString(MESSAGE_BODY, mapper.writeValueAsString(message))
+      // TODO rz - Totally a possibility that we'll have messages scheduled out further than 6hr
       .withLong(TTL, deliveryTime.plus(Duration.ofHours(6)).toEpochMilli())
       .also {
         schedulesTable.putItem(it)
@@ -135,7 +136,6 @@ class DynamoDbMessageRepository(
       .toMap()
   }
 
-  // TODO rz - This needs a locking mechanism around it, since it writes values into the queue.
   override fun scheduled(maxDeliveryTime: Instant, callback: (Message, Instant) -> Unit) {
     val expressionAttributeValues = mapOf(
       ":maxDeliveryTime" to AttributeValue().withN("${maxDeliveryTime.toEpochMilli()}")
@@ -206,6 +206,7 @@ class DynamoDbMessageRepository(
         .withProvisionedThroughput(ProvisionedThroughput(5, 5))
     ).run {
       log.info("Waiting for table $tableName to be active")
+      waitForActive()
       client.updateTimeToLive(
         UpdateTimeToLiveRequest()
           .withTableName(tableName)
@@ -215,7 +216,6 @@ class DynamoDbMessageRepository(
               .withEnabled(true)
           )
       )
-      waitForActive()
       log.info("Table $tableName is now active")
     }
   }
