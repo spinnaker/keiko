@@ -22,6 +22,7 @@ import com.amazonaws.services.dynamodbv2.document.PrimaryKey
 import com.amazonaws.services.dynamodbv2.document.Table
 import com.amazonaws.services.dynamodbv2.document.TableKeysAndAttributes
 import com.amazonaws.services.dynamodbv2.document.spec.PutItemSpec
+import com.amazonaws.services.dynamodbv2.model.AmazonDynamoDBException
 import com.amazonaws.services.dynamodbv2.model.AttributeDefinition
 import com.amazonaws.services.dynamodbv2.model.AttributeValue
 import com.amazonaws.services.dynamodbv2.model.ConditionalCheckFailedException
@@ -76,7 +77,7 @@ class DynamoDbMessageRepository(
       return listOf()
     }
 
-    return messageIds.mapNotNull {
+    return messageIds.mapNotNull { it ->
       try {
         PutItemSpec()
           .withItem(
@@ -85,8 +86,8 @@ class DynamoDbMessageRepository(
               .withLong(TTL, Instant.now().plus(ttl).toEpochMilli())
           )
           .withConditionExpression("attribute_not_exists($MESSAGE_ID)")
-          .also {
-            schedulesTable.putItem(it)
+          .also { item ->
+            schedulesTable.putItem(item)
           }
         return@mapNotNull it
       } catch (e: ConditionalCheckFailedException) {
@@ -161,7 +162,6 @@ class DynamoDbMessageRepository(
 
       lastKeyEvaluated = result.lastEvaluatedKey
     } while (lastKeyEvaluated != null)
-
   }
 
   private fun ensureSchedulesTable(dynamoDB: DynamoDB, tables: List<String>): Table {
@@ -194,9 +194,12 @@ class DynamoDbMessageRepository(
     return dynamoDB.getTable(locksTableName)
   }
 
-  private fun createTable(tableName: String,
-                          keySchema: List<KeySchemaElement>,
-                          attributeDefinitions: List<AttributeDefinition>) {
+  private fun createTable(
+    tableName: String,
+    keySchema: List<KeySchemaElement>,
+    attributeDefinitions: List<AttributeDefinition>
+  ) {
+
     dynamoDB.createTable(
       CreateTableRequest()
         .withTableName(tableName)
@@ -207,15 +210,23 @@ class DynamoDbMessageRepository(
     ).run {
       log.info("Waiting for table $tableName to be active")
       waitForActive()
-      client.updateTimeToLive(
-        UpdateTimeToLiveRequest()
-          .withTableName(tableName)
-          .withTimeToLiveSpecification(
-            TimeToLiveSpecification()
-              .withAttributeName(TTL)
-              .withEnabled(true)
-          )
-      )
+
+      try {
+        client.updateTimeToLive(
+          UpdateTimeToLiveRequest()
+            .withTableName(tableName)
+            .withTimeToLiveSpecification(
+              TimeToLiveSpecification()
+                .withAttributeName(TTL)
+                .withEnabled(true)
+            )
+        )
+      } catch (e: AmazonDynamoDBException) {
+        // TEST ONLY: Localstack does not currently support updateTimeToLive
+        if (e.errorCode != "UnknownOperationException") {
+          throw e
+        }
+      }
       log.info("Table $tableName is now active")
     }
   }

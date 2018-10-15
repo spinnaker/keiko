@@ -19,7 +19,11 @@ import com.amazonaws.services.dynamodbv2.AcquireLockOptions
 import com.amazonaws.services.dynamodbv2.AmazonDynamoDB
 import com.amazonaws.services.dynamodbv2.AmazonDynamoDBLockClient
 import com.amazonaws.services.dynamodbv2.AmazonDynamoDBLockClientOptions
+import com.amazonaws.services.dynamodbv2.CreateDynamoDBTableOptions
+import com.amazonaws.services.dynamodbv2.model.LockTableDoesNotExistException
+import com.amazonaws.services.dynamodbv2.model.ProvisionedThroughput
 import com.netflix.spinnaker.q.sqs.LockProvider
+import org.slf4j.LoggerFactory
 import java.util.concurrent.TimeUnit
 import javax.annotation.PreDestroy
 
@@ -27,6 +31,8 @@ class DynamoDbLockProvider(
   dynamoDB: AmazonDynamoDB,
   tableName: String
 ) : LockProvider {
+
+  private val log = LoggerFactory.getLogger(javaClass)
 
   private val client = AmazonDynamoDBLockClient(
     AmazonDynamoDBLockClientOptions.builder(dynamoDB, tableName)
@@ -37,16 +43,36 @@ class DynamoDbLockProvider(
       .build()
   )
 
+  init {
+    try {
+      client.assertLockTableExists()
+    } catch (e: LockTableDoesNotExistException) {
+      log.info("Creating lock table: $tableName")
+      AmazonDynamoDBLockClient.createLockTableInDynamoDB(
+        CreateDynamoDBTableOptions.builder(dynamoDB, ProvisionedThroughput(5, 5), tableName)
+          .build()
+      )
+    }
+    client.assertLockTableExists()
+  }
+
   @PreDestroy
   fun shutdown() {
     client.close()
   }
 
   override fun tryAcquire(lockName: String, callback: () -> Unit) {
-    val lockItem = client.tryAcquireLock(AcquireLockOptions.builder(lockName).build())
-    lockItem.ifPresent {
-      callback()
-      client.releaseLock(it)
+    log.debug("Attempting to acquire lock: $lockName")
+    try {
+      val lockItem = client.tryAcquireLock(AcquireLockOptions.builder(lockName).build())
+      lockItem.ifPresent {
+        callback()
+        client.releaseLock(it)
+      }
+    } catch (e: InterruptedException) {
+      log.warn("Lock was interrupted: $lockName", e)
+    } catch (e: Exception) {
+      log.error("Unexpected error while acquiring or releasing lock: $lockName", e)
     }
   }
 }

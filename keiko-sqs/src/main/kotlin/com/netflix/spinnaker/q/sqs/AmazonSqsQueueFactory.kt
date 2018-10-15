@@ -23,7 +23,9 @@ import java.time.temporal.TemporalAmount
 /**
  * Offers a functional interface for creating SQS queues.
  */
-typealias AmazonSqsQueueFactory = (CreateQueueCommand) -> String
+interface AmazonSqsQueueFactory {
+  fun invoke(command: CreateQueueCommand): String
+}
 
 /**
  * TODO rz - Need to add configuration for a policy before appsec will likely let this be a thing.

@@ -11,6 +11,4 @@ dependencies {
   compile "com.fasterxml.jackson.core:jackson-databind:${spinnaker.version("jackson")}"
   compile "com.fasterxml.jackson.module:jackson-module-kotlin:${spinnaker.version("jackson")}"
   compile "com.google.guava:guava:${spinnaker.version("guava")}"
-
-  testCompile project(":keiko-tck")
 }

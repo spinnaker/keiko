@@ -71,7 +71,7 @@ class SqsQueue(
 
   init {
     log.info("Configuring queue: $queueName")
-    queueUrl = amazonSqsQueueFactory(CreateQueueCommand(
+    queueUrl = amazonSqsQueueFactory.invoke(CreateQueueCommand(
       queueName = queueName,
       ackTimeout = ackTimeout,
       retentionPeriod = Duration.ofHours(6)
@@ -117,10 +117,11 @@ class SqsQueue(
     prefetchMessages(true).firstOrNull()?.let { (message, sqsMessage) ->
       val ack = this::removeMessage.partially1(sqsMessage)
 
-      val deliveryTime = (sqsMessage.attributes[DELIVERY_TIME] ?: sqsMessage.attributes[SENT_TIMESTAMP])
-        ?.toLongOrNull()
-        ?.let { Instant.ofEpochMilli(it) }
-        ?: Instant.MIN
+      val deliveryTime =
+        (sqsMessage.attributes[DELIVERY_TIME] ?: sqsMessage.attributes[SENT_TIMESTAMP])
+          ?.toLongOrNull()
+          ?.let { Instant.ofEpochMilli(it) }
+          ?: Instant.MIN
 
       fire(MessageProcessing(message, deliveryTime, clock.instant()))
       callback(message, ack)
@@ -203,7 +204,9 @@ class SqsQueue(
     prefetchedMessages.removeIf { it.second == message }
   }
 
-  private fun List<SqsMessage>.filterInvalid(invalidMessages: MutableList<SqsMessage>): List<SqsMessage> {
+  private fun List<SqsMessage>.filterInvalid(
+    invalidMessages: MutableList<SqsMessage>
+  ): List<SqsMessage> {
     val list = mutableListOf<SqsMessage>()
     for (element in this) {
       val fingerprint = element.attributes[FINGERPRINT]
