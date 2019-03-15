@@ -5,5 +5,5 @@ dependencies {
   compile "org.threeten:threeten-extra:1.0"
 
   testCompile project(":keiko-tck")
-  testCompile "org.funktionale:funktionale-partials:1.1"
+  testCompile spinnaker.dependency("funktionale")
 }

@@ -6,7 +6,7 @@ buildscript {
   }
   dependencies {
     classpath "com.netflix.nebula:nebula-kotlin-plugin:$kotlinVersion"
-    classpath "com.netflix.spinnaker.gradle:spinnaker-gradle-project:4.0.0"
+    classpath "com.netflix.spinnaker.gradle:spinnaker-gradle-project:5.2.2"
     classpath "org.jetbrains.dokka:dokka-gradle-plugin:0.9.15"
     classpath "org.jetbrains.kotlin:kotlin-allopen:$kotlinVersion"
   }
@@ -22,36 +22,31 @@ buildscript {
 }
 
 allprojects {
-  apply plugin: "spinnaker.project"
+  apply plugin: "spinnaker.base-project"
 
   group = "com.netflix.spinnaker.keiko"
+
+  repositories {
+    mavenLocal()
+    jcenter()
+  }
+
+  spinnaker {
+    dependenciesVersion = "2.0.0-rc.22-springBoot2"
+  }
 }
 
 subprojects {
   apply from: "$rootDir/gradle/kotlin.gradle"
   apply from: "$rootDir/gradle/dokka.gradle"
 
-  repositories {
-    jcenter()
-  }
-
   dependencies {
-    compile "org.slf4j:slf4j-api:1.7.25"
-    testRuntime "org.slf4j:slf4j-nop:1.7.25"
-  }
-
-  spinnaker {
-    dependenciesVersion = "0.127.0"
+    compile spinnaker.dependency("slf4jApi")
+    testRuntime "org.slf4j:slf4j-nop:${spinnaker.version("slf4j")}"
   }
 
   sourceCompatibility = 1.8
   targetCompatibility = 1.8
-
-  license {
-    mapping {
-      kt = "SLASHSTAR_STYLE"
-    }
-  }
 }
 
 apply from: "$rootDir/gradle/ktlint-root.gradle"
