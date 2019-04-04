@@ -5,9 +5,9 @@ buildscript {
     maven { url "https://plugins.gradle.org/m2/" }
   }
   dependencies {
+    classpath("com.netflix.spinnaker.gradle:spinnaker-dev-plugin:5.2.2")
     classpath "com.netflix.nebula:nebula-kotlin-plugin:$kotlinVersion"
-    classpath "com.netflix.spinnaker.gradle:spinnaker-gradle-project:4.0.0"
-    classpath "org.jetbrains.dokka:dokka-gradle-plugin:0.9.15"
+    classpath "org.jetbrains.dokka:dokka-gradle-plugin:0.9.17"
     classpath "org.jetbrains.kotlin:kotlin-allopen:$kotlinVersion"
   }
   configurations.all {
@@ -22,7 +22,7 @@ buildscript {
 }
 
 allprojects {
-  apply plugin: "spinnaker.project"
+  apply plugin: "spinnaker.base-project"
 
   group = "com.netflix.spinnaker.keiko"
 }
@@ -41,17 +41,17 @@ subprojects {
   }
 
   spinnaker {
-    dependenciesVersion = "0.127.0"
+    dependenciesVersion = "0.137.0"
   }
 
   sourceCompatibility = 1.8
   targetCompatibility = 1.8
 
-  license {
-    mapping {
-      kt = "SLASHSTAR_STYLE"
-    }
-  }
+//  license {
+//    mapping {
+//      kt = "SLASHSTAR_STYLE"
+//    }
+//  }
 }
 
 apply from: "$rootDir/gradle/ktlint-root.gradle"

@@ -6,6 +6,7 @@ dependencies {
   compile("com.netflix.spinnaker.kork:kork-core:${spinnaker.version("kork")}") {
     exclude(module: "logback-classic")
   }
+  compile "com.netflix.eureka:eureka-client:1.9.2"
 
   testCompile project(":keiko-test-common")
 }
