@@ -166,7 +166,7 @@ class SqlQueue(
   }
 
   override fun containsMessage(predicate: (Message) -> Boolean): Boolean {
-    val batchSize = 100
+    val batchSize = 2000
     var found = false
     var lastId = "0"
 
