@@ -1,5 +1,5 @@
 /*
- * Copyright 2017 Netflix, Inc.
+ * Copyright 2019 Netflix, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License")
  * you may not use this file except in compliance with the License.
@@ -111,11 +111,7 @@ class QueueMetricsPublisher(
    * Count of messages pushed to the queue.
    */
   private val MessagePushed.counter: Counter
-    get() = when (payload) {
-      // TODO: what to do about ApplicationAware?
-//      is ApplicationAware -> registry.counter("queue.pushed.messages", "application", (payload as ApplicationAware).application)
-      else -> registry.counter("queue.pushed.messages")
-    }
+    get() = registry.counter("queue.pushed.messages")
 
   /**
    * Count of messages successfully processed and acknowledged.
