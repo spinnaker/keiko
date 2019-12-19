@@ -28,6 +28,7 @@ import com.netflix.spinnaker.q.metrics.EventPublisher
 import com.netflix.spinnaker.q.metrics.MonitorableQueue
 import com.netflix.spinnaker.q.metrics.NoopEventPublisher
 import com.netflix.spinnaker.q.metrics.QueueMetricsPublisher
+import com.netflix.spinnaker.q.metrics.QueueMonitor
 import org.springframework.boot.autoconfigure.condition.ConditionalOnMissingBean
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty
 import org.springframework.boot.context.properties.EnableConfigurationProperties
@@ -98,14 +99,23 @@ class QueueConfiguration {
   fun enabledActivator(queueProperties: QueueProperties) = EnabledActivator(queueProperties.enabled)
 
   @Bean
-  @ConditionalOnMissingBean(EventPublisher::class)
-  fun queueEventPublisher() = NoopEventPublisher()
+  @ConditionalOnProperty("queue.metrics.enabled", havingValue = "true", matchIfMissing = true)
+  fun queueMonitor(
+    registry: Registry,
+    clock: Clock,
+    queue: MonitorableQueue
+  ) = QueueMonitor(registry, clock, queue)
 
   @Bean
   @ConditionalOnProperty("queue.metrics.enabled", havingValue = "true", matchIfMissing = true)
   fun queueMetricsPublisher(
     registry: Registry,
-    clock: Clock,
-    queue: MonitorableQueue
-  ) = QueueMetricsPublisher(registry, clock, queue)
+    clock: Clock
+  ): EventPublisher =
+    QueueMetricsPublisher(registry, clock)
+
+  @Bean
+  @ConditionalOnMissingBean(EventPublisher::class)
+  fun queueEventPublisher(): EventPublisher =
+    NoopEventPublisher()
 }

@@ -20,7 +20,6 @@ import com.netflix.spectator.api.Counter
 import com.netflix.spectator.api.Registry
 import com.netflix.spectator.api.patterns.PolledMeter
 import com.netflix.spinnaker.q.Queue
-import org.springframework.scheduling.annotation.Scheduled
 import java.time.Clock
 import java.time.Duration
 import java.time.Instant
@@ -29,12 +28,11 @@ import java.util.concurrent.atomic.AtomicReference
 
 /**
  * - can be registered as a queue EventPublisher
- * - publishes metrics based on queue events and regular polling of the queue state
+ * - publishes metrics based on queue events
  */
 class QueueMetricsPublisher(
   val registry: Registry,
-  val clock: Clock,
-  val queue: MonitorableQueue
+  val clock: Clock
 ) : EventPublisher {
   init {
     PolledMeter.using(registry)
@@ -54,30 +52,6 @@ class QueueMetricsPublisher(
           .toMillis()
           .toDouble()
       })
-
-    PolledMeter.using(registry)
-      .withName("queue.depth")
-      .monitorValue(this, {
-        it.lastState.depth.toDouble()
-      })
-
-    PolledMeter.using(registry)
-      .withName("queue.unacked.depth")
-      .monitorValue(this, {
-        it.lastState.unacked.toDouble()
-      })
-
-    PolledMeter.using(registry)
-      .withName("queue.ready.depth")
-      .monitorValue(this, {
-        it.lastState.ready.toDouble()
-      })
-
-    PolledMeter.using(registry)
-      .withName("queue.orphaned.messages")
-      .monitorValue(this, {
-        it.lastState.orphaned.toDouble()
-      })
   }
 
   override fun publishEvent(event: QueueEvent) {
@@ -96,15 +70,6 @@ class QueueMetricsPublisher(
       is MessageRescheduled -> event.counter.increment()
       is MessageNotFound -> event.counter.increment()
     }
-  }
-
-  val lastState: QueueState
-    get() = _lastState.get()
-  private val _lastState = AtomicReference<QueueState>(QueueState(0, 0, 0))
-
-  @Scheduled(fixedDelayString = "\${queue.depth.metric.frequency:30000}")
-  fun pollQueueState() {
-    _lastState.set(queue.readState())
   }
 
   /**
