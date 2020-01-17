@@ -15,6 +15,7 @@ import com.netflix.spinnaker.q.Queue
 import com.netflix.spinnaker.q.metrics.EventPublisher
 import com.netflix.spinnaker.q.metrics.MessageAcknowledged
 import com.netflix.spinnaker.q.metrics.MessageDead
+import com.netflix.spinnaker.q.metrics.MessageDuplicate
 import com.netflix.spinnaker.q.metrics.MessageNotFound
 import com.netflix.spinnaker.q.metrics.MessageProcessing
 import com.netflix.spinnaker.q.metrics.MessagePushed
@@ -402,28 +403,45 @@ class SqlQueue(
       jooq.transaction { config ->
         val txn = DSL.using(config)
 
-        txn.insertInto(messagesTable)
-          .set(idField, ulid.toString())
-          .set(fingerprintField, fingerprint)
-          .set(bodyField, mapper.writeValueAsString(message))
-          .set(updatedAtField, clock.millis())
-          .onDuplicateKeyUpdate()
-          .set(idField, MySQLDSL.values(idField) as Any)
-          .set(bodyField, MySQLDSL.values(bodyField) as Any)
-          .execute()
+        val existingFingerprint = txn.select(field(idField))
+          .from(unackedTable)
+          .where(fingerprintField.eq(fingerprint))
+          .fetchOne(0, String::class.java)
 
-        txn.insertInto(queueTable)
-          .set(idField, ULID.nextMonotonicValue(ulid).toString())
-          .set(fingerprintField, fingerprint)
-          .set(deliveryField, deliveryTime)
-          .set(lockedField, "0")
-          .onDuplicateKeyUpdate()
-          .set(deliveryField, MySQLDSL.values(deliveryField) as Any)
-          .execute()
+        // If the fingerprint exists in the unacked table, then the message already exists. In this
+        // case, we'll reschedule the message for the delay amount, rather than adding a new
+        // message onto the queue.
+        if (existingFingerprint != null) {
+          txn.update(queueTable)
+            .set(deliveryField, atTime(delay))
+            .where(fingerprintField.eq(fingerprint))
+            .execute()
+
+          fire(MessageDuplicate(message))
+        } else {
+          txn.insertInto(messagesTable)
+            .set(idField, ulid.toString())
+            .set(fingerprintField, fingerprint)
+            .set(bodyField, mapper.writeValueAsString(message))
+            .set(updatedAtField, clock.millis())
+            .onDuplicateKeyUpdate()
+            .set(idField, MySQLDSL.values(idField) as Any)
+            .set(bodyField, MySQLDSL.values(bodyField) as Any)
+            .execute()
+
+          txn.insertInto(queueTable)
+            .set(idField, ULID.nextMonotonicValue(ulid).toString())
+            .set(fingerprintField, fingerprint)
+            .set(deliveryField, deliveryTime)
+            .set(lockedField, "0")
+            .onDuplicateKeyUpdate()
+            .set(deliveryField, MySQLDSL.values(deliveryField) as Any)
+            .execute()
+
+          fire(MessagePushed(message))
+        }
       }
     }
-
-    fire(MessagePushed(message))
   }
 
   override fun reschedule(message: Message, delay: TemporalAmount) {
