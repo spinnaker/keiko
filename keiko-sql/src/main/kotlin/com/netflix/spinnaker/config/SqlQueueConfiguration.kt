@@ -1,6 +1,7 @@
 package com.netflix.spinnaker.config
 
 import com.fasterxml.jackson.databind.ObjectMapper
+import com.netflix.spinnaker.q.LocalAckSkipState
 import com.netflix.spinnaker.q.metrics.EventPublisher
 import com.netflix.spinnaker.q.migration.SerializationMigrator
 import com.netflix.spinnaker.q.sql.SqlDeadMessageHandler
@@ -35,7 +36,8 @@ class SqlQueueConfiguration {
     deadMessageHandler: SqlDeadMessageHandler,
     publisher: EventPublisher,
     serializationMigrator: Optional<SerializationMigrator>,
-    properties: SqlQueueProperties
+    properties: SqlQueueProperties,
+    localAckSkipState: LocalAckSkipState
   ) =
     SqlQueue(
       queueName = properties.queueName,
@@ -48,7 +50,8 @@ class SqlQueueConfiguration {
       ackTimeout = properties.ackTimeout,
       deadMessageHandlers = listOf(deadMessageHandler),
       publisher = publisher,
-      sqlRetryProperties = properties.retries
+      sqlRetryProperties = properties.retries,
+      localAckSkipState = localAckSkipState
     )
 
   @Bean

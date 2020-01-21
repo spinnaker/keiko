@@ -21,6 +21,7 @@ import com.fasterxml.jackson.databind.ObjectMapper
 import com.netflix.spinnaker.KotlinOpen
 import com.netflix.spinnaker.q.AttemptsAttribute
 import com.netflix.spinnaker.q.DeadMessageCallback
+import com.netflix.spinnaker.q.LocalAckSkipState
 import com.netflix.spinnaker.q.MaxAttemptsAttribute
 import com.netflix.spinnaker.q.Message
 import com.netflix.spinnaker.q.Queue
@@ -67,7 +68,8 @@ class RedisQueue(
   override val ackTimeout: TemporalAmount = Duration.ofMinutes(1),
   override val deadMessageHandlers: List<DeadMessageCallback>,
   override val canPollMany: Boolean = false,
-  override val publisher: EventPublisher
+  override val publisher: EventPublisher,
+  private val localAckSkipState: LocalAckSkipState
 ) : AbstractRedisQueue(
   clock,
   lockTtlSeconds,
@@ -157,6 +159,17 @@ class RedisQueue(
         fire(MessageNotFound(message))
       }
     }
+  }
+
+  override fun ackAndPush(message: Message, delay: TemporalAmount) {
+    pool.resource.use { redis ->
+      val fingerprint = message.fingerprint().latest
+      log.debug("Acking and re-pushing message: $message, " +
+        "fingerprint: $fingerprint to delivery in $delay")
+      ackMessage(fingerprint)
+      redis.queueMessage(message, delay)
+    }
+    localAckSkipState.skipAck()
   }
 
   override fun ensure(message: Message, delay: TemporalAmount) {

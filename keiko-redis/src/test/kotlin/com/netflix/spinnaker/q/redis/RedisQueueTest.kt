@@ -22,6 +22,7 @@ import com.fasterxml.jackson.module.kotlin.KotlinModule
 import com.netflix.spinnaker.kork.jedis.EmbeddedRedis
 import com.netflix.spinnaker.q.AttemptsAttribute
 import com.netflix.spinnaker.q.DeadMessageCallback
+import com.netflix.spinnaker.q.LocalAckSkipState
 import com.netflix.spinnaker.q.MaxAttemptsAttribute
 import com.netflix.spinnaker.q.QueueTest
 import com.netflix.spinnaker.q.TestMessage
@@ -61,7 +62,8 @@ private val createQueue = { clock: Clock,
       registerSubtypes(TestMessage::class.java)
       registerSubtypes(MaxAttemptsAttribute::class.java, AttemptsAttribute::class.java)
     },
-    serializationMigrator = Optional.empty()
+    serializationMigrator = Optional.empty(),
+    localAckSkipState = LocalAckSkipState()
   )
 }
 

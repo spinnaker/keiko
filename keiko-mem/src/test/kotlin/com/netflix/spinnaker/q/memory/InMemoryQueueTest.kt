@@ -17,6 +17,7 @@
 package com.netflix.spinnaker.q.memory
 
 import com.netflix.spinnaker.q.DeadMessageCallback
+import com.netflix.spinnaker.q.LocalAckSkipState
 import com.netflix.spinnaker.q.QueueTest
 import com.netflix.spinnaker.q.metrics.EventPublisher
 import com.netflix.spinnaker.q.metrics.MonitorableQueueTest
@@ -39,6 +40,7 @@ private val createQueue = { clock: Clock,
     deadMessageHandlers = listOf(deadLetterCallback),
     publisher = publisher ?: (object : EventPublisher {
       override fun publishEvent(event: QueueEvent) {}
-    })
+    }),
+    localAckSkipState = LocalAckSkipState()
   )
 }

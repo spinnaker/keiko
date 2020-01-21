@@ -17,6 +17,7 @@
 package com.netflix.spinnaker.config
 
 import com.netflix.spinnaker.q.DeadMessageCallback
+import com.netflix.spinnaker.q.LocalAckSkipState
 import com.netflix.spinnaker.q.memory.InMemoryQueue
 import com.netflix.spinnaker.q.metrics.EventPublisher
 import org.springframework.context.annotation.Bean
@@ -30,11 +31,13 @@ class MemQueueConfiguration {
   fun queue(
     clock: Clock,
     deadMessageHandler: DeadMessageCallback,
-    publisher: EventPublisher
+    publisher: EventPublisher,
+    localAckSkipState: LocalAckSkipState
   ) =
     InMemoryQueue(
       clock = clock,
       deadMessageHandlers = listOf(deadMessageHandler),
-      publisher = publisher
+      publisher = publisher,
+      localAckSkipState = localAckSkipState
     )
 }

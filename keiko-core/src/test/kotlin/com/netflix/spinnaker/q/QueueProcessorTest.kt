@@ -67,7 +67,8 @@ object QueueProcessorTest : Spek({
         emptyList(),
         listOf(activator),
         publisher,
-        deadMessageHandler
+        deadMessageHandler,
+        LocalAckSkipState()
       )
 
       afterGroup(::resetMocks)
@@ -95,7 +96,8 @@ object QueueProcessorTest : Spek({
           emptyList(),
           listOf(activator),
           publisher,
-          deadMessageHandler
+          deadMessageHandler,
+          LocalAckSkipState()
         )
 
         beforeGroup {
@@ -127,7 +129,8 @@ object QueueProcessorTest : Spek({
           listOf(simpleMessageHandler, parentMessageHandler),
           listOf(activator),
           publisher,
-          deadMessageHandler
+          deadMessageHandler,
+          LocalAckSkipState()
         )
 
         describe("when a message is on the queue") {

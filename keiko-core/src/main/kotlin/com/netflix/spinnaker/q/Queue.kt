@@ -44,22 +44,26 @@ interface Queue {
    * @param callback invoked with the next message from the queue if there is
    * one and an _acknowledge_ function to call once processing is complete.
    */
-  fun poll(callback: QueueCallback): Unit
+  fun poll(callback: QueueCallback)
 
   /**
    * Polls the queue for ready messages, processing up-to [maxMessages].
    */
-  fun poll(maxMessages: Int, callback: QueueCallback): Unit
+  fun poll(maxMessages: Int, callback: QueueCallback)
 
   /**
    * Push [message] for immediate delivery.
+   *
+   * TODO(rz): Disallow pushing a message if the message already exists.
    */
   fun push(message: Message): Unit = push(message, ZERO)
 
   /**
    * Push [message] for delivery after [delay].
+   *
+   * TODO(rz): Disallow pushing a message if the message already exists.
    */
-  fun push(message: Message, delay: TemporalAmount): Unit
+  fun push(message: Message, delay: TemporalAmount)
 
   /**
    * Update [message] if it exists for immediate delivery.
@@ -69,14 +73,33 @@ interface Queue {
   /**
    * Update [message] if it exists for delivery after [delay].
    */
-  fun reschedule(message: Message, delay: TemporalAmount): Unit
+  fun reschedule(message: Message, delay: TemporalAmount)
+
+  /**
+   * Ack a [message] (if it already exists), and then re-push the [message]
+   * onto the queue.
+   *
+   * This method differs from [ensure] in that it will always result in a
+   * new message being put onto the queue, even if this message is currently
+   * in unacked.
+   *
+   * Implementations must use with [LocalAckSkipState] in order to avoid
+   * potential concurrency problems.
+   */
+  fun ackAndPush(message: Message) = ackAndPush(message, ZERO)
+
+  /**
+   * Ack a [message] (if it already exists), and then re-push the [message]
+   * onto the queue for delivery after [delay].
+   */
+  fun ackAndPush(message: Message, delay: TemporalAmount)
 
   /**
    * Ensure [message] is present within the queue or is currently being worked on.
    * Add to the queue after [delay] if not present. No action is taken if
    * [message] already exists.
    */
-  fun ensure(message: Message, delay: TemporalAmount): Unit
+  fun ensure(message: Message, delay: TemporalAmount)
 
   /**
    * Check for any un-acknowledged messages that are overdue and move them back

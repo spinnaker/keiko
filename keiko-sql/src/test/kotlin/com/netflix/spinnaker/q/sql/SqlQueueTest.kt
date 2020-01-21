@@ -9,6 +9,7 @@ import com.netflix.spinnaker.kork.sql.test.SqlTestUtil
 import com.netflix.spinnaker.q.AckAttemptsAttribute
 import com.netflix.spinnaker.q.AttemptsAttribute
 import com.netflix.spinnaker.q.DeadMessageCallback
+import com.netflix.spinnaker.q.LocalAckSkipState
 import com.netflix.spinnaker.q.MaxAttemptsAttribute
 import com.netflix.spinnaker.q.QueueTest
 import com.netflix.spinnaker.q.TestMessage
@@ -56,7 +57,8 @@ private val createQueue = { clock: Clock,
       override fun publishEvent(event: QueueEvent) {}
     }),
     sqlRetryProperties = SqlRetryProperties(transactions = retryPolicy,
-      reads = retryPolicy)
+      reads = retryPolicy),
+    localAckSkipState = LocalAckSkipState()
   )
 }
 

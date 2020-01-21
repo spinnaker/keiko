@@ -9,6 +9,7 @@ import com.netflix.spinnaker.kork.sql.config.SqlRetryProperties
 import com.netflix.spinnaker.q.AckAttemptsAttribute
 import com.netflix.spinnaker.q.AttemptsAttribute
 import com.netflix.spinnaker.q.DeadMessageCallback
+import com.netflix.spinnaker.q.LocalAckSkipState
 import com.netflix.spinnaker.q.MaxAttemptsAttribute
 import com.netflix.spinnaker.q.Message
 import com.netflix.spinnaker.q.Queue
@@ -70,7 +71,8 @@ class SqlQueue(
   override val canPollMany: Boolean = true,
   override val publisher: EventPublisher,
   private val sqlRetryProperties: SqlRetryProperties,
-  private val ULID: ULID = ULID()
+  private val ULID: ULID = ULID(),
+  private val localAckSkipState: LocalAckSkipState
 ) : MonitorableQueue {
 
   companion object {
@@ -444,6 +446,17 @@ class SqlQueue(
         fire(MessageNotFound(message))
       }
     }
+  }
+
+  override fun ackAndPush(message: Message, delay: TemporalAmount) {
+    val fingerprint = message.hashV2()
+    log.debug("Acking and re-pushing message: $message, " +
+      "fingerprint: $fingerprint to delivery in $delay")
+    withRetry(RetryCategory.WRITE) {
+      ackMessage(fingerprint)
+      push(message, delay)
+    }
+    localAckSkipState.skipAck()
   }
 
   override fun ensure(message: Message, delay: TemporalAmount) {

@@ -41,6 +41,7 @@ class QueueProcessor(
   private val activators: List<Activator>,
   private val publisher: EventPublisher,
   private val deadMessageHandler: DeadMessageCallback,
+  private val localAckEscapeState: LocalAckSkipState,
   private val fillExecutorEachCycle: Boolean = false,
   private val requeueDelay: Duration = Duration.ofSeconds(0),
   private val requeueMaxJitter: Duration = Duration.ofSeconds(0)
@@ -87,7 +88,9 @@ class QueueProcessor(
         executor.execute {
           try {
             handler.invoke(message)
-            ack.invoke()
+            localAckEscapeState.maybeSkipAck {
+              ack.invoke()
+            }
           } catch (e: Throwable) {
             // Something very bad is happening
             log.error("Unhandled throwable from $message", e)

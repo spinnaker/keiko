@@ -19,6 +19,7 @@ package com.netflix.spinnaker.config
 import com.fasterxml.jackson.databind.DeserializationFeature
 import com.fasterxml.jackson.databind.ObjectMapper
 import com.fasterxml.jackson.module.kotlin.KotlinModule
+import com.netflix.spinnaker.q.LocalAckSkipState
 import com.netflix.spinnaker.q.metrics.EventPublisher
 import com.netflix.spinnaker.q.migration.SerializationMigrator
 import com.netflix.spinnaker.q.redis.RedisClusterDeadMessageHandler
@@ -94,7 +95,8 @@ class RedisQueueConfiguration {
     deadMessageHandler: RedisDeadMessageHandler,
     publisher: EventPublisher,
     redisQueueObjectMapper: ObjectMapper,
-    serializationMigrator: Optional<SerializationMigrator>
+    serializationMigrator: Optional<SerializationMigrator>,
+    localAckSkipState: LocalAckSkipState
   ) =
     RedisQueue(
       queueName = redisQueueProperties.queueName,
@@ -104,7 +106,8 @@ class RedisQueueConfiguration {
       deadMessageHandlers = listOf(deadMessageHandler),
       publisher = publisher,
       ackTimeout = Duration.ofSeconds(redisQueueProperties.ackTimeoutSeconds.toLong()),
-      serializationMigrator = serializationMigrator
+      serializationMigrator = serializationMigrator,
+      localAckSkipState = localAckSkipState
     )
 
   @Bean
@@ -157,7 +160,8 @@ class RedisQueueConfiguration {
     deadMessageHandler: RedisClusterDeadMessageHandler,
     publisher: EventPublisher,
     redisQueueObjectMapper: ObjectMapper,
-    serializationMigrator: Optional<SerializationMigrator>
+    serializationMigrator: Optional<SerializationMigrator>,
+    localAckSkipState: LocalAckSkipState
   ) =
     RedisClusterQueue(
       queueName = redisQueueProperties.queueName,
@@ -167,7 +171,8 @@ class RedisQueueConfiguration {
       deadMessageHandlers = listOf(deadMessageHandler),
       publisher = publisher,
       ackTimeout = Duration.ofSeconds(redisQueueProperties.ackTimeoutSeconds.toLong()),
-      serializationMigrator = serializationMigrator
+      serializationMigrator = serializationMigrator,
+      localAckSkipState = localAckSkipState
     )
 
   @Bean

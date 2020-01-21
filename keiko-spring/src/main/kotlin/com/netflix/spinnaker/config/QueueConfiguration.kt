@@ -20,6 +20,7 @@ import com.netflix.spectator.api.Registry
 import com.netflix.spinnaker.q.Activator
 import com.netflix.spinnaker.q.DeadMessageCallback
 import com.netflix.spinnaker.q.EnabledActivator
+import com.netflix.spinnaker.q.LocalAckSkipState
 import com.netflix.spinnaker.q.MessageHandler
 import com.netflix.spinnaker.q.Queue
 import com.netflix.spinnaker.q.QueueExecutor
@@ -49,6 +50,10 @@ class QueueConfiguration {
   @Bean
   @ConditionalOnMissingBean(Clock::class)
   fun systemClock(): Clock = Clock.systemDefaultZone()
+
+  @Bean
+  fun localAckSkipState(): LocalAckSkipState =
+    LocalAckSkipState()
 
   @Bean
   fun messageHandlerPool(queueProperties: QueueProperties) =
@@ -82,7 +87,8 @@ class QueueConfiguration {
     activators: List<Activator>,
     publisher: EventPublisher,
     queueProperties: QueueProperties,
-    deadMessageHandler: DeadMessageCallback
+    deadMessageHandler: DeadMessageCallback,
+    localAckSkipState: LocalAckSkipState
   ) = QueueProcessor(
     queue,
     executor,
@@ -90,6 +96,7 @@ class QueueConfiguration {
     activators,
     publisher,
     deadMessageHandler,
+    localAckSkipState,
     queueProperties.fillExecutorEachCycle,
     Duration.ofSeconds(queueProperties.requeueDelaySeconds),
     Duration.ofSeconds(queueProperties.requeueMaxJitterSeconds)

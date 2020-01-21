@@ -17,6 +17,7 @@
 package com.netflix.spinnaker.q.memory
 
 import com.netflix.spinnaker.q.DeadMessageCallback
+import com.netflix.spinnaker.q.LocalAckSkipState
 import com.netflix.spinnaker.q.Message
 import com.netflix.spinnaker.q.Queue
 import com.netflix.spinnaker.q.QueueCallback
@@ -52,7 +53,8 @@ class InMemoryQueue(
   override val ackTimeout: TemporalAmount = Duration.ofMinutes(1),
   override val deadMessageHandlers: List<DeadMessageCallback>,
   override val canPollMany: Boolean = false,
-  override val publisher: EventPublisher
+  override val publisher: EventPublisher,
+  private val localAckSkipState: LocalAckSkipState
 ) : MonitorableQueue {
 
   private val log: Logger = getLogger(javaClass)
@@ -98,6 +100,13 @@ class InMemoryQueue(
     if (existed) {
       queue.put(Envelope(message, clock.instant().plus(delay), clock))
     }
+  }
+
+  override fun ackAndPush(message: Message, delay: TemporalAmount) {
+    queue.removeIf { it.payload == message }
+    unacked.removeIf { it.payload == message }
+    push(message, delay)
+    localAckSkipState.skipAck()
   }
 
   override fun ensure(message: Message, delay: TemporalAmount) {
