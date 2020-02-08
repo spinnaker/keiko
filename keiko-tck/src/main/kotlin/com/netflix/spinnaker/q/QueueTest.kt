@@ -500,7 +500,7 @@ abstract class QueueTest<out Q : Queue>(
         }
       }
 
-      and("an identical message is pushed and polled after reading but before acknowledging the first") {
+      and("an identical message is pushed and polled after the first is read but unacked") {
         beforeGroup {
           queue = createQueue(clock, deadLetterCallback).apply {
             push(message)
